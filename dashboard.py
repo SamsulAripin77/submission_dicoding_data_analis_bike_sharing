@@ -6,25 +6,30 @@ st.header('Bike Sharing Dashboard :sparkles:')
 
 
 st.subheader('Q1 - Pada musim apa jumlah pengguna sepeda tertinggi dan terendah terjadi?')
+
 bike_hour = pd.read_csv('data/hour.csv')
-bike_hour_by_season = bike_hour.groupby(by="season").agg({
+bike_hour['dteday'] = pd.to_datetime(bike_hour['dteday'])
+
+years = bike_hour['yr'].unique()  # Mendapatkan daftar tahun unik
+year_mapping = {0: 2011, 1: 2012}  # Mapping nilai 'yr' ke tahun sebenarnya
+years_mapped = [year_mapping[yr] for yr in years]
+
+selected_year = st.selectbox("Pilih Tahun:", years_mapped)
+filtered_bike_hour = bike_hour[bike_hour['yr'] == list(year_mapping.keys())[list(year_mapping.values()).index(selected_year)]]
+bike_hour_by_season = filtered_bike_hour.groupby(by="season").agg({
     "cnt": "sum",
 })
-
 season_labels = {1: "Spring", 2: "Summer", 3: "Fall", 4: "Winter"}
 bike_hour_by_season.index = bike_hour_by_season.index.map(season_labels)
 bike_hour_by_season = bike_hour_by_season.sort_values(by="cnt", ascending=False)
-
 max_season = bike_hour_by_season["cnt"].idxmax()
 min_season = bike_hour_by_season["cnt"].idxmin()
-
 st.write("Musim dengan jumlah pengguna sepeda tertinggi adalah **{}**.".format(max_season))
 st.write("Musim dengan jumlah pengguna sepeda terendah adalah **{}**.".format(min_season))
 st.dataframe(bike_hour_by_season)
-
 fig, ax = plt.subplots(figsize=(8, 6))
 bike_hour_by_season['cnt'].plot(kind='bar', color='skyblue', ax=ax)
-ax.set_title('Jumlah Pengguna Sepeda Berdasarkan Musim', fontsize=16)
+ax.set_title(f'Jumlah Pengguna Sepeda Berdasarkan Musim (Tahun {selected_year})', fontsize=16)
 ax.set_xlabel('Musim', fontsize=12)
 ax.set_ylabel('Jumlah Penyewaan Sepeda', fontsize=12)
 ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))  # Menampilkan angka dengan format ribuan
